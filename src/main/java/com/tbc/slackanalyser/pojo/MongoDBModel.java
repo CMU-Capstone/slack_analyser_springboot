@@ -135,8 +135,10 @@ public class MongoDBModel {
         String keywordRegex = ".*" + keyword + ".*";
         String start = allParam.getOrDefault("start","0");
         String end = allParam.getOrDefault("end",getNewestTimeStamp("Messages"));
+        String channel = allParam.getOrDefault("channel",".*");
         MongoCursor<Document> cursor = collection.find(and(gte("timeStamp",start),lte("timeStamp",end),
-                regex("userEmail", email), regex("text", keywordRegex))).iterator();
+                regex("userEmail", email), regex("text", keywordRegex),
+                regex("channelName", channel))).iterator();
         List<Document> result = new ArrayList<Document>();
         try {
             while (cursor.hasNext()) {
