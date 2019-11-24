@@ -13,8 +13,6 @@ import java.util.List;
 
 
 public class SlackModel {
-    final String OAuthToken = "xoxp-741285264438-739107245509-837279275031-2d7365ec89fbda9e77ccae0e64e6c2e2";
-    final String botToken = "xoxb-741285264438-808394586211-GNGkyUkSxD5CiJlPAIv46J5z";
     public static void main(String[] args){
         SlackModel slackModel = new SlackModel();
 //        slackModel.getChannelList();
@@ -29,7 +27,7 @@ public class SlackModel {
     }
 
 
-    public JSONArray getChannelList(){
+    public JSONArray getChannelList(String botToken){
         String urlString = "https://slack.com/api/channels.list?token=" + botToken;
         String response = getResponseString(urlString);
 //        System.out.println(response);
@@ -45,8 +43,8 @@ public class SlackModel {
     }
 
 
-    public List<String> getChannelNames(){
-        JSONArray channelListJSONArray = getChannelList();
+    public List<String> getChannelNames(String botToken){
+        JSONArray channelListJSONArray = getChannelList(botToken);
         List<String> result = new ArrayList<String>();
         for(int i = 0; i < channelListJSONArray.length(); i++){
             result.add(channelListJSONArray.getJSONObject(i).get("name").toString());
@@ -58,8 +56,8 @@ public class SlackModel {
     }
 
     //If not found, return null
-    public String getChannelIDByName(String channelName){
-        JSONArray channelListJSONArray = getChannelList();
+    public String getChannelIDByName(String channelName, String botToken){
+        JSONArray channelListJSONArray = getChannelList(botToken);
         for(int i = 0; i < channelListJSONArray.length(); i++){
             if(channelListJSONArray.getJSONObject(i).get("name").toString().equals(channelName)){
                 return channelListJSONArray.getJSONObject(i).get("id").toString();
@@ -68,7 +66,7 @@ public class SlackModel {
         return null;
     }
 
-    public JSONArray getChannelMessageHistory(String channelID, String oldest){
+    public JSONArray getChannelMessageHistory(String channelID, String oldest, String OAuthToken){
         String urlString = "https://slack.com/api/channels.history?token=" + OAuthToken + "&channel=" + channelID+ "&oldest=" + oldest;
         String response = getResponseString(urlString);
 //        System.out.println(response);
@@ -81,8 +79,8 @@ public class SlackModel {
         }
     }
 
-    public List<String> getMessageTextList(String channelID, String oldest){
-        JSONArray messageJSONArray = getChannelMessageHistory(channelID, oldest);
+    public List<String> getMessageTextList(String channelID, String oldest, String OAuthToken){
+        JSONArray messageJSONArray = getChannelMessageHistory(channelID, oldest, OAuthToken);
         if(messageJSONArray == null){
             return null;
         }
@@ -97,9 +95,9 @@ public class SlackModel {
         return result;
     }
 
-    public JSONArray filterRawMessage(String channelName, String oldest){
-        String channelID = getChannelIDByName(channelName);
-        JSONArray rawMessageList = getChannelMessageHistory(channelID, oldest);
+    public JSONArray filterRawMessage(String channelName, String oldest, String OAuthToken, String botToken, String hackathonName){
+        String channelID = getChannelIDByName(channelName, botToken);
+        JSONArray rawMessageList = getChannelMessageHistory(channelID, oldest, OAuthToken);
         JSONArray result = new JSONArray();
         for(int i = 0; i < rawMessageList.length(); i++){
             JSONObject messageJSON = rawMessageList.getJSONObject(i);
@@ -110,6 +108,7 @@ public class SlackModel {
                 tmp.put("userID", messageJSON.get("user").toString());
                 tmp.put("text", messageJSON.get("text").toString());
                 tmp.put("channelName", channelName);
+                tmp.put("hackathonName", hackathonName);
                 result.put(tmp);
             }
         }
@@ -135,8 +134,8 @@ public class SlackModel {
         return response;
     }
 
-    public List<String> getMessageContainsWord(String keyword, String channelID, String oldest){
-        List<String> messageTextList = getMessageTextList(channelID, oldest);
+    public List<String> getMessageContainsWord(String keyword, String channelID, String oldest, String OAuthToken){
+        List<String> messageTextList = getMessageTextList(channelID, oldest, OAuthToken);
         if(messageTextList == null){
             return null;
         }
@@ -152,7 +151,7 @@ public class SlackModel {
         return result;
     }
 
-    public JSONArray getAllUserInfo(){
+    public JSONArray getAllUserInfo(String OAuthToken){
         String urlStr = "https://slack.com/api/users.list?token=" + OAuthToken;
         String response = getResponseString(urlStr);
         JSONObject jsonObject = new JSONObject(response);
@@ -176,8 +175,8 @@ public class SlackModel {
         return result;
     }
 
-    public String getUserEmail(String userID){
-        JSONArray userInfoList = getAllUserInfo();
+    public String getUserEmail(String userID, String OAuthToken){
+        JSONArray userInfoList = getAllUserInfo(OAuthToken);
         for(int i = 0; i < userInfoList.length(); i++){
             if(userInfoList.getJSONObject(i).get("id").toString().equals(userID)){
                 return userInfoList.getJSONObject(i).get("email").toString();

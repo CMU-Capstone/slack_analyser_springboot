@@ -26,6 +26,10 @@ import static com.mongodb.client.model.Filters.regex;
 public class MongoDBModel {
     final String MongoURL = "mongodb+srv://slack_analyser:slacktest123@tbcpipeline-06hga.mongodb.net/test?retryWrites=true&w=majority";
 
+    public static void main(String[] args){
+        MongoDBModel mongoDBModel = new MongoDBModel();
+        mongoDBModel.deleteAll("Messages");
+    }
     public MongoDBModel(){
         final LogManager lm = LogManager.getLogManager();
         for(final Enumeration<String> i = lm.getLoggerNames(); i.hasMoreElements(); ) {
