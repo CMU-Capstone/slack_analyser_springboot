@@ -39,22 +39,26 @@ public class SlackController {
             String hackathonName = jsonObject.get("hackathonName").toString();
             String OAuthToken = jsonObject.get("OAuthToken").toString();
             String botToken = jsonObject.get("botToken").toString();
-            JSONArray userList = slackModel.getAllUserInfo(OAuthToken);
-            Map<String, String> userMap = new HashMap<>();
-            for(int j = 0; j < userList.length(); j++){
-                userMap.put(userList.getJSONObject(j).get("id").toString(), userList.getJSONObject(j).get("email").toString());
-            }
-            String newestTimeStamp = mongoDBModel.getNewestTimeStamp("Messages",hackathonName);
-            List<String> channelList = slackModel.getChannelNames(botToken);
-            for(String channelName : channelList){
-                JSONArray messageList = slackModel.filterRawMessage(channelName, newestTimeStamp, OAuthToken, botToken, hackathonName);
-                for(int j = 0; j < messageList.length(); j++){
-                    messageList.getJSONObject(j).put("userEmail", userMap.getOrDefault(messageList.getJSONObject(j).get("userID").toString(),""));
+            try{
+                JSONArray userList = slackModel.getAllUserInfo(OAuthToken);
+                Map<String, String> userMap = new HashMap<>();
+                for(int j = 0; j < userList.length(); j++){
+                    userMap.put(userList.getJSONObject(j).get("id").toString(), userList.getJSONObject(j).get("email").toString());
                 }
-                if(messageList.length() > 0){
-                    mongoDBModel.doWrite( messageList,"Messages");
-                }
+                String newestTimeStamp = mongoDBModel.getNewestTimeStamp("Messages",hackathonName);
+                List<String> channelList = slackModel.getChannelNames(botToken);
+                for(String channelName : channelList){
+                    JSONArray messageList = slackModel.filterRawMessage(channelName, newestTimeStamp, OAuthToken, botToken, hackathonName);
+                    for(int j = 0; j < messageList.length(); j++){
+                        messageList.getJSONObject(j).put("userEmail", userMap.getOrDefault(messageList.getJSONObject(j).get("userID").toString(),""));
+                    }
+                    if(messageList.length() > 0){
+                        mongoDBModel.doWrite( messageList,"Messages");
+                    }
 
+                }
+            }catch(Exception e){
+                continue;
             }
         }
         return ResponseEntity.ok(HttpStatus.OK);
@@ -71,7 +75,25 @@ public class SlackController {
     @GetMapping("getAllTokens")
     public String getAllTokens(){
         TokenManager tokenManager = new TokenManager();
-        return tokenManager.readFile().toString();
+        SlackModel slackModel = new SlackModel();
+        JSONArray tokenList = tokenManager.readFile();
+        JSONArray result = new JSONArray();
+        for(int i = 0; i < tokenList.length(); i++) {
+            JSONObject jsonObject = tokenList.getJSONObject(i);
+            String OAuthToken = jsonObject.get("OAuthToken").toString();
+            String botToken = jsonObject.get("botToken").toString();
+            try {
+                JSONArray userList = slackModel.getAllUserInfo(OAuthToken);
+                JSONArray channelList = slackModel.getChannelList(botToken);
+                jsonObject.put("valid", "true");
+
+            } catch (Exception e) {
+                jsonObject.put("valid", "false");
+            } finally {
+                result.put(jsonObject);
+            }
+        }
+        return result.toString();
     }
 
     @CrossOrigin(origins = "*")
