@@ -44,7 +44,7 @@ public class SlackController {
             for(int j = 0; j < userList.length(); j++){
                 userMap.put(userList.getJSONObject(j).get("id").toString(), userList.getJSONObject(j).get("email").toString());
             }
-            String newestTimeStamp = mongoDBModel.getNewestTimeStamp("Messages");
+            String newestTimeStamp = mongoDBModel.getNewestTimeStamp("Messages",hackathonName);
             List<String> channelList = slackModel.getChannelNames(botToken);
             for(String channelName : channelList){
                 JSONArray messageList = slackModel.filterRawMessage(channelName, newestTimeStamp, OAuthToken, botToken, hackathonName);

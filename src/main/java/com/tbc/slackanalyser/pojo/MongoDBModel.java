@@ -18,10 +18,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Filters.lte;
-import static com.mongodb.client.model.Filters.regex;
+import static com.mongodb.client.model.Filters.*;
 
 public class MongoDBModel {
     final String MongoURL = "mongodb+srv://slack_analyser:slacktest123@tbcpipeline-06hga.mongodb.net/test?retryWrites=true&w=majority";
@@ -29,6 +26,7 @@ public class MongoDBModel {
     public static void main(String[] args){
         MongoDBModel mongoDBModel = new MongoDBModel();
         mongoDBModel.deleteAll("Messages");
+//        System.out.println(System.currentTimeMillis());
     }
     public MongoDBModel(){
         final LogManager lm = LogManager.getLogManager();
@@ -84,12 +82,12 @@ public class MongoDBModel {
         mongoClient.close();
     }
 
-    public String getNewestTimeStamp(String collectionName){
+    public String getNewestTimeStamp(String collectionName, String hackathonName){
         MongoClientURI uri = new MongoClientURI(MongoURL);
         MongoClient mongoClient = new MongoClient(uri);
         MongoDatabase database = mongoClient.getDatabase("SlackDatabase");
         MongoCollection<Document> collection = database.getCollection(collectionName);
-        Document doc = collection.find().sort(Sorts.descending("timeStamp")).first();
+        Document doc = collection.find(eq("hackathonName", hackathonName)).sort(Sorts.descending("timeStamp")).first();
         mongoClient.close();
         if(doc == null){
             return "0";
@@ -138,7 +136,7 @@ public class MongoDBModel {
         String keyword = allParam.getOrDefault("keyword","");
         String keywordRegex = ".*" + keyword + ".*";
         String start = allParam.getOrDefault("start","0");
-        String end = allParam.getOrDefault("end",getNewestTimeStamp("Messages"));
+        String end = allParam.getOrDefault("end",String.valueOf(System.currentTimeMillis()/1000));
         String channel = allParam.getOrDefault("channel",".*");
         String hackathonName = allParam.getOrDefault("hackathonName",".*");
         MongoCursor<Document> cursor = collection.find(and(gte("timeStamp",start),lte("timeStamp",end),
